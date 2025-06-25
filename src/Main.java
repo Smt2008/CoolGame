@@ -6,7 +6,7 @@ import java.util.ArrayList;
 public class Main extends PApplet {
     int WIDTH = 800;
     int HEIGHT = 800;
-    int RADIUS = 15;
+    int RADIUS = 10;
 
     boolean upPressed = false;
     boolean downPressed = false;
@@ -14,9 +14,11 @@ public class Main extends PApplet {
     boolean rightPressed = false;
     boolean paused = false;
     boolean drawMode = false;
+    boolean turretMode = false;
 
     ArrayList<bullet> BulletList = new ArrayList<>();
-    ArrayList<ArrayList<Integer>> Obstacles = new ArrayList<>();
+    ArrayList<Wall> Obstacles = new ArrayList<>();
+    ArrayList<Turret> Turrets = new ArrayList<>();
 
     player Player;
     Random rand = new Random();
@@ -37,7 +39,6 @@ public class Main extends PApplet {
     }
 
     public void draw() {
-        System.out.println(paused);
         if(!paused){
             background(255);
             Player.velocity = new PVector(0, 0); // Reset velocity each frame
@@ -67,7 +68,13 @@ public class Main extends PApplet {
             for(int i = 0; i<Obstacles.size();i++){
                 push();
                 strokeWeight(15);
-                line(Obstacles.get(i).get(0), Obstacles.get(i).get(1), Obstacles.get(i).get(2), Obstacles.get(i).get(3));
+                Obstacles.get(i).display();
+                pop();
+            }
+            for(int i = 0; i<Turrets.size();i++){
+                push();
+                fill(0);
+                Turrets.get(i).display();
                 pop();
             }
 
@@ -77,7 +84,13 @@ public class Main extends PApplet {
             for(int i = 0; i<Obstacles.size();i++){
                 push();
                 strokeWeight(15);
-                line(Obstacles.get(i).get(0), Obstacles.get(i).get(1), Obstacles.get(i).get(2), Obstacles.get(i).get(3));
+                Obstacles.get(i).display();
+                pop();
+            }
+            for(int i = 0; i<Turrets.size();i++){
+                push();
+                fill(0);
+                Turrets.get(i).display();
                 pop();
             }
             for (int i = 0; i < BulletList.size(); i++) {
@@ -109,27 +122,48 @@ public class Main extends PApplet {
                     bullet shot = BulletList.get(i);
                     shot.display();
                 }
+
                 fill(0,255,0);
                 rect(100, 50, 150, 50, 20);
                 fill(0);
                 textSize(25);
                 text("Draw Mode", 100,50);
+
+                fill(0,255,0);
+                rect(100, 90, 125, 45, 20);
+                fill(0);
+                textSize(20);
+                if(turretMode == false) {
+                    text("Turret Mode", 100, 90);
+                }else{
+                    text("Wall Mode", 100, 90);
+                }
+
                 fill(255,0,0);
                 rect(700, 50, 150, 50, 20);
                 fill(0);
                 textSize(25);
                 text("Done", 700,50);
+
                 for(int i = 0; i<Obstacles.size();i++){
                     push();
                     strokeWeight(15);
-                    line(Obstacles.get(i).get(0), Obstacles.get(i).get(1), Obstacles.get(i).get(2), Obstacles.get(i).get(3));
+                    Obstacles.get(i).display();
                     pop();
                 }
+                for(int i = 0; i<Turrets.size();i++){
+                    push();
+                    fill(0);
+                    Turrets.get(i).display();
+                    pop();
+                }
+
                 fill(255);
             }
         }
         // Drawing code (executed repeatedly)
     }
+
     public void mousePressed(){
         if(!paused) {
             Player.shoot();
@@ -140,24 +174,38 @@ public class Main extends PApplet {
             if (drawMode && mouseX >= 700 - 150/2 && mouseX <= 700 + 150/2 && mouseY >= 50 - 50/2 && mouseY <= 50 + 50/2) {
                 drawMode = false;
             }
+            if (drawMode && mouseX >= 100 - 125/2 && mouseX <= 100 + 125/2 && mouseY >= 90 - 45/2 && mouseY <= 90 + 45/2) {
+                turretMode = !turretMode;
+            }
         }
     }
 
     int counter = 0;
     ArrayList<Integer> coords = new ArrayList<>();
     public void mouseClicked(){
-        if(drawMode){
-            counter+=1;
-            coords.add(mouseX);
-            coords.add(mouseY);
-            if(counter == 2){
-                fill(0);
-                Obstacles.add(new ArrayList<>(coords));
-                counter = 0;
-                coords.clear();
+        if(drawMode && !turretMode){
+            if((mouseX < 700 - 150/2 || mouseX > 700 + 150/2 || mouseY < 50 - 50/2 || mouseY > 50 + 50/2)&&
+                    (mouseX < 100 - 125/2 || mouseX > 100 + 125/2 || mouseY < 90 - 45/2 || mouseY > 90 + 45/2)){
+                counter += 1;
+                coords.add(mouseX);
+                coords.add(mouseY);
+                if (counter == 2) {
+                    fill(0);
+                    Obstacles.add(new Wall(coords.get(0), coords.get(1), coords.get(2), coords.get(3)));
+                    counter = 0;
+                    coords.clear();
+                }
+            }
+        }
+        if(drawMode && turretMode){
+            if((mouseX < 700 - 150/2 || mouseX > 700 + 150/2 || mouseY < 50 - 50/2 || mouseY > 50 + 50/2)&&
+                    (mouseX < 100 - 125/2 || mouseX > 100 + 125/2 || mouseY < 90 - 45/2 || mouseY > 90 + 45/2)){
+                Turret turret = new Turret(mouseX, mouseY);
+                Turrets.add(turret);
             }
         }
     }
+
     public ArrayList<PVector> getLinePoints(int x0, int y0, int x1, int y1) {
         ArrayList<PVector> points = new ArrayList<>();
         int dx = abs(x1 - x0);
@@ -196,16 +244,15 @@ public class Main extends PApplet {
             if (key == 'd') {
                 rightPressed = true;
             }
-
         }
         if (key == ' ') {
-            System.out.println("hallelujah");
             if(paused){
                 paused = false;
             }else if(!paused){
                 paused = true;
             }
             drawMode = false;
+            turretMode = false;
         }
     }
 
@@ -237,12 +284,18 @@ public class Main extends PApplet {
             if (position.y <= RADIUS) {
                 position.y = RADIUS;
             }
-            for(int z = 0; z < Obstacles.size(); z++) {
-                ArrayList<PVector> line = getLinePoints(Obstacles.get(z).get(0), Obstacles.get(z).get(1), Obstacles.get(z).get(2), Obstacles.get(z).get(3));
+            for(int z = 0; z < Obstacles.size(); z++){
+                ArrayList<PVector> line = getLinePoints(Obstacles.get(z).xPosition1, Obstacles.get(z).yPosition1, Obstacles.get(z).xPosition2, Obstacles.get(z).yPosition2);
                 for(int y = 0; y < line.size(); y++){
                     if(position.dist(line.get(y))<=RADIUS+6){
                         position.sub(velocity);
                     }
+                }
+            }
+            for(int z = 0; z < Turrets.size(); z++){
+                PVector circPos = new PVector(Turrets.get(z).xPosition, Turrets.get(z).yPosition);
+                if(position.dist(circPos)<=15+RADIUS){
+                    position.sub(velocity);
                 }
             }
         }
@@ -256,6 +309,32 @@ public class Main extends PApplet {
             BulletList.add(shot);
         }
     }
+    public class Turret{
+        int xPosition;
+        int yPosition;
+        public Turret(int Xpos, int Ypos){
+            xPosition = Xpos;
+            yPosition = Ypos;
+        }
+        public void display(){
+            circle(xPosition,yPosition, 35);
+        }
+    }
+    public class Wall{
+        int xPosition1;
+        int yPosition1;
+        int xPosition2;
+        int yPosition2;
+        public Wall(int Xpos1, int Ypos1, int Xpos2, int Ypos2){
+            xPosition1 = Xpos1;
+            yPosition1 = Ypos1;
+            xPosition2 = Xpos2;
+            yPosition2 = Ypos2;
+        }
+        public void display(){
+            line(xPosition1,yPosition1,xPosition2,yPosition2);
+        }
+    }
     public class bullet{
         PVector position;
         PVector velocity;
@@ -264,13 +343,27 @@ public class Main extends PApplet {
             velocity = velo.copy().setMag(20);
         }
         public void move(){
-                position.add(velocity);
-                if (position.x >= WIDTH - 2 || position.x <= 2) {
+            position.add(velocity);
+            if (position.x >= WIDTH - 2 || position.x <= 2) {
+                BulletList.remove(this);
+            }
+            if (position.y >= HEIGHT - 2 || position.y <= 2) {
+                BulletList.remove(this);
+            }
+            for(int z = 0; z < Obstacles.size(); z++){
+                ArrayList<PVector> line = getLinePoints(Obstacles.get(z).xPosition1, Obstacles.get(z).yPosition1, Obstacles.get(z).xPosition2, Obstacles.get(z).yPosition2);
+                for(int y = 0; y < line.size(); y++){
+                    if(position.dist(line.get(y))<=RADIUS+6){
+                        BulletList.remove(this);
+                    }
+                }
+            }
+            for(int z = 0; z < Turrets.size(); z++){
+                PVector circPos = new PVector(Turrets.get(z).xPosition, Turrets.get(z).yPosition);
+                if(position.dist(circPos)<=15+RADIUS){
                     BulletList.remove(this);
                 }
-                if (position.y >= HEIGHT - 2 || position.y <= 2) {
-                    BulletList.remove(this);
-                }
+            }
         }
         public void display(){
             circle(position.x, position.y, 5);
