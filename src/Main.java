@@ -7,6 +7,7 @@ public class Main extends PApplet {
     int WIDTH = 800;
     int HEIGHT = 800;
     int RADIUS = 10;
+    int speed = 3;
 
     boolean upPressed = false;
     boolean downPressed = false;
@@ -56,7 +57,7 @@ public class Main extends PApplet {
                 Player.velocity.add(new PVector(1, 0));
             }
 
-            Player.velocity.setMag(3); // Set speed (optional)
+            Player.velocity.setMag(speed); // Set speed (optional)
 
             Player.move();
             Player.display();
@@ -70,15 +71,17 @@ public class Main extends PApplet {
                 strokeWeight(15);
                 Obstacles.get(i).display();
                 pop();
+                Obstacles.get(i).move();
             }
             for(int i = 0; i<Turrets.size();i++){
                 push();
                 fill(0);
                 Turrets.get(i).display();
                 pop();
+                Turrets.get(i).move();
             }
 
-        }else{
+        } else{
             background(255);
             Player.display();
             for(int i = 0; i<Obstacles.size();i++){
@@ -86,12 +89,14 @@ public class Main extends PApplet {
                 strokeWeight(15);
                 Obstacles.get(i).display();
                 pop();
+                Obstacles.get(i).move();
             }
             for(int i = 0; i<Turrets.size();i++){
                 push();
                 fill(0);
                 Turrets.get(i).display();
                 pop();
+                Turrets.get(i).move();
             }
             for (int i = 0; i < BulletList.size(); i++) {
                 bullet shot = BulletList.get(i);
@@ -150,12 +155,14 @@ public class Main extends PApplet {
                     strokeWeight(15);
                     Obstacles.get(i).display();
                     pop();
+                    Obstacles.get(i).move();
                 }
                 for(int i = 0; i<Turrets.size();i++){
                     push();
                     fill(0);
                     Turrets.get(i).display();
                     pop();
+                    Turrets.get(i).move();
                 }
 
                 fill(255);
@@ -234,15 +241,35 @@ public class Main extends PApplet {
         if(!paused) {
             if (key == 'w') {
                 upPressed = true;
+                speed = 3;
+            }
+            if (key == 'W') {
+                upPressed = true;
+                speed = 5;
             }
             if (key == 's') {
                 downPressed = true;
+                speed = 3;
+            }
+            if (key == 'S') {
+                downPressed = true;
+                speed = 5;
             }
             if (key == 'a') {
                 leftPressed = true;
+                speed = 3;
+            }
+            if (key == 'A') {
+                leftPressed = true;
+                speed = 5;
             }
             if (key == 'd') {
                 rightPressed = true;
+                speed = 3;
+            }
+            if (key == 'D') {
+                rightPressed = true;
+                speed = 5;
             }
         }
         if (key == ' ') {
@@ -257,10 +284,30 @@ public class Main extends PApplet {
     }
 
     public void keyReleased(){
-        if(key == 'w'){upPressed = false;}
-        if(key == 's'){downPressed = false;}
-        if(key == 'a'){leftPressed = false;}
-        if(key == 'd'){rightPressed = false;}
+        if (key == 'w') {
+            upPressed = false;
+        }
+        if (key == 'W') {
+            upPressed = false;
+        }
+        if (key == 's') {
+            downPressed = false;
+        }
+        if (key == 'S') {
+            downPressed = false;
+        }
+        if (key == 'a') {
+            leftPressed = false;
+        }
+        if (key == 'A') {
+            leftPressed = false;
+        }
+        if (key == 'd') {
+            rightPressed = false;
+        }
+        if (key == 'D') {
+            rightPressed = false;
+        }
     }
 
     public class player{
@@ -285,7 +332,7 @@ public class Main extends PApplet {
                 position.y = RADIUS;
             }
             for(int z = 0; z < Obstacles.size(); z++){
-                ArrayList<PVector> line = getLinePoints(Obstacles.get(z).xPosition1, Obstacles.get(z).yPosition1, Obstacles.get(z).xPosition2, Obstacles.get(z).yPosition2);
+                ArrayList<PVector> line = getLinePoints((int)Obstacles.get(z).position1.x, (int)Obstacles.get(z).position1.y, (int)Obstacles.get(z).position2.x, (int)Obstacles.get(z).position2.y);
                 for(int y = 0; y < line.size(); y++){
                     if(position.dist(line.get(y))<=RADIUS+6){
                         position.sub(velocity);
@@ -312,9 +359,17 @@ public class Main extends PApplet {
     public class Turret{
         int xPosition;
         int yPosition;
+        PVector position;
+        PVector velocity;
+
         public Turret(int Xpos, int Ypos){
             xPosition = Xpos;
             yPosition = Ypos;
+            position = new PVector(Xpos, Ypos);
+            velocity = Player.velocity.rotate(PI);
+        }
+        public void move(){
+            position.add(velocity);
         }
         public void display(){
             circle(xPosition,yPosition, 35);
@@ -325,14 +380,24 @@ public class Main extends PApplet {
         int yPosition1;
         int xPosition2;
         int yPosition2;
+        PVector position1;
+        PVector position2;
+        PVector velocity;
         public Wall(int Xpos1, int Ypos1, int Xpos2, int Ypos2){
-            xPosition1 = Xpos1;
-            yPosition1 = Ypos1;
-            xPosition2 = Xpos2;
-            yPosition2 = Ypos2;
+//            xPosition1 = Xpos1;
+//            yPosition1 = Ypos1;
+//            xPosition2 = Xpos2;
+//            yPosition2 = Ypos2;
+            position1 = new PVector(Xpos1, Ypos1);
+            position2 = new PVector(Xpos2, Ypos2);
+            velocity = Player.velocity.rotate(PI);
+        }
+        public void move(){
+            position1.add(velocity);
+            position2.add(velocity);
         }
         public void display(){
-            line(xPosition1,yPosition1,xPosition2,yPosition2);
+            line(position1.x,position1.y,position2.x,position2.y);
         }
     }
     public class bullet{
@@ -369,6 +434,5 @@ public class Main extends PApplet {
             circle(position.x, position.y, 5);
         }
     }
-
 
 }
